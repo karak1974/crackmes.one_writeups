@@ -12,11 +12,13 @@ Link: https://crackmes.one/crackme/5c2acb8933c5d46a3882b8d4
 |Quality    |                5.0|
 |Arch       |             x86-64|
 
-
-
 ## Recon
-In the `main()` function we see that there's a call for `checkSerial()` function what checks the input.  
-```
+After extracting the **Keygen.tar.gz** with the `tar -xvf Keygen.tar.gz` connad we got a binary called `SimpleKeyGen`.  
+With the `fime SimpleKeyGen` command we see that thisis a `ELF 64-bit` binary.  
+
+Let's open it with [rz-cutter](https://archlinux.org/packages/community/x86_64/rz-cutter/) (I'm using the ghidra standalone dubugger).
+In the `main()` function we see that there's a call for `checkSerial()` function what checks the value of `argv[1]`.  
+```c
 iVar1 = checkSerial(argv[1]);
 if (iVar1 == 0) {
     puts("Good Serial");
@@ -26,8 +28,10 @@ if (iVar1 == 0) {
     uVar2 = 0xffffffff;
 }
 ```
+
 ### Reversing checkSerial()
-```
+For the next time it's very confusing, so the next step is the deobfuscating.  
+```c
 undefined8 checkSerial(char *arg1)
 {
     int64_t iVar1;
@@ -51,13 +55,11 @@ undefined8 checkSerial(char *arg1)
     return uVar2;
 }
 ```
-For the first time it's very confusing, so the next step is the deobfuscating.  
-After this the code will look like this:  
-```
+After the manual deobfuscating it will look like this:  
+```c
 int checkSerial(char *input) {
     int input_len;
     int ret;
-    char *s;
     int i;
 
     input_len = strlen(input);
@@ -79,8 +81,8 @@ int checkSerial(char *input) {
 }
 ```
 We got many information now.  
-The `input_len` must be 16, the for loop goes by 2 and the most important codeblock:
-```
+The `input_len` variable must be 16, the variable **i** in increased by 2 every itteration and the most important codeblock:
+```c
  if ( input[i] - input[i + 1] != -1) {
     // fail
     return 0xffffffff;
@@ -89,13 +91,14 @@ The `input_len` must be 16, the for loop goes by 2 and the most important codebl
 
 ## Solution
 We know that `input[i] - input[i + 1]` must be **-1** so every 2nd int must be greater by 1 than the previous one.  
+Here's a working example:
 ```
-index 0  1
-value 2  3
+index 0 1
+value 2 3
 ```
 We could do it 8 times like
 `2323232323232323`
 
 ### Personal solve time
-2022/09/11
+2022/09/11  
 0930 - 0950
